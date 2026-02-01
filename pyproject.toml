@@ -1,0 +1,45 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "llm-autobatch"
+version = "0.1.0"
+description = "Automatic micro-batching for HTTP LLM calls and local PyTorch inference, backed by a Rust core."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Your Name", email = "you@example.com" }
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Rust",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries",
+]
+keywords = ["llm", "batching", "rust", "pyo3", "pytorch", "openai"]
+
+[project.urls]
+Homepage = "https://github.com/your-org/llm-autobatch"
+Source = "https://github.com/your-org/llm-autobatch"
+Issues = "https://github.com/your-org/llm-autobatch/issues"
+
+[project.optional-dependencies]
+http = ["httpx>=0.24"]
+torch = ["torch>=2.0"]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "llm_autobatch._native"
+python-source = "src"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+addopts = "-q"
