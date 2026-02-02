@@ -45,6 +45,7 @@ jobs:
         working-directory: rust
 
       - name: Build extension
+        shell: bash
         run: |
           maturin build --release --out dist
           python -m pip install dist/*.whl
