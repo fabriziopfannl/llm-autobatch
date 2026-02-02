@@ -55,8 +55,8 @@ impl BatcherCore {
 
         let pending = Pending {
             enqueued_at: Instant::now(),
-            item: item.into(),
-            executor: executor.into(),
+            item,
+            executor,
             tx,
         };
 
@@ -104,6 +104,132 @@ impl BatcherCore {
         self.cv.notify_all();
     }
 
+    pub fn metrics(&self) -> MetricsSnapshot {
+        self.metrics.snapshot()
+    }
+
+    pub fn close(&self) {
+        self.stop.store(true, Ordering::Relaxed);
+        self.cv.notify_all();
+    }
+}
+
+impl BatcherCore {
+    fn spawn_worker(&self) {
+        let queue = Arc::clone(&self.queue);
+        let cv = Arc::clone(&self.cv);
+        let metrics = Arc::clone(&self.metrics);
+        let stop = Arc::clone(&self.stop);
+        let max_batch = self.max_batch;
+        let max_wait_ms = self.max_wait_ms;
+
+        thread::spawn(move || loop {
+            let mut batch: Vec<Pending> = Vec::new();
+
+            {
+                let mut q = queue.lock();
+                while q.is_empty() && !stop.load(Ordering::Relaxed) {
+                    cv.wait(&mut q);
+                }
+
+                if stop.load(Ordering::Relaxed) {
+                    break;
+                }
+
+                let deadline = q[0].enqueued_at + Duration::from_millis(max_wait_ms);
+
+                while q.len() < max_batch && Instant::now() < deadline {
+                    let timeout = deadline.saturating_duration_since(Instant::now());
+                    if timeout.is_zero() {
+                        break;
+                    }
+                    cv.wait_for(&mut q, timeout);
+                    if q.is_empty() {
+                        break;
+                    }
+                }
+
+                let take = std::cmp::min(q.len(), max_batch);
+                batch.extend(q.drain(0..take));
+                cv.notify_all();
+            }
+
+            if batch.is_empty() {
+                continue;
+            }
+
+            if batch.len() >= max_batch {
+                metrics.flush_max_batch.fetch_add(1, Ordering::Relaxed);
+            } else {
+                metrics.flush_deadline.fetch_add(1, Ordering::Relaxed);
+            }
+
+            metrics.total_batches.fetch_add(1, Ordering::Relaxed);
+            metrics
+                .total_items
+                .fetch_add(batch.len() as u64, Ordering::Relaxed);
+
+            Python::with_gil(|py| {
+                let items = batch
+                    .iter()
+                    .map(|p| p.item.clone_ref(py).into_py(py))
+                    .collect::<Vec<PyObject>>();
+
+                let list = PyList::new_bound(py, &items);
+                let exec = batch[0].executor.clone_ref(py);
+
+                let result = exec.call1(py, (list.as_any(),));
+                match result {
+                    Ok(out) => {
+                        let out_list = out.downcast_bound::<PyList>(py);
+                        if let Ok(out_list) = out_list {
+                            if out_list.len() != batch.len() {
+                                let msg = format!(
+                                    "executor returned {} items for {} inputs",
+                                    out_list.len(),
+                                    batch.len()
+                                );
+                                for p in batch {
+                                    let _ = p.tx.send(Err(msg.clone()));
+                                }
+                                return;
+                            }
+
+                            for (i, p) in batch.into_iter().enumerate() {
+                                let value = out_list.get_item(i).unwrap().into_py(py);
+                                let _ = p.tx.send(Ok(value));
+                            }
+                        } else {
+                            let msg = "executor must return a list".to_string();
+                            for p in batch {
+                                let _ = p.tx.send(Err(msg.clone()));
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        let msg = format!("executor error: {err}");
+                        for p in batch {
+                            let _ = p.tx.send(Err(msg.clone()));
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    fn call_executor_direct(&self, py: Python, pending: Pending) -> PyResult<PyObject> {
+        let list = PyList::new_bound(py, &[pending.item.clone_ref(py).into_py(py)]);
+        let exec = pending.executor.clone_ref(py);
+        let out = exec.call1(py, (list.as_any(),))?;
+        let out_list = out.downcast_bound::<PyList>(py)?;
+        if out_list.len() != 1 {
+            return Err(pyo3::exceptions::PyRuntimeError::new_err(
+                "executor must return one item in passthrough mode",
+            ));
+        }
+        Ok(out_list.get_item(0).unwrap().into_py(py))
+    }
+}
     pub fn metrics(&self) -> MetricsSnapshot {
         self.metrics.snapshot()
     }
