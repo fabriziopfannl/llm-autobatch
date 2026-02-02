@@ -14,8 +14,10 @@ jobs:
         include:
           - os: ubuntu-latest
             maturin_args: "--release --sdist"
-          - os: macos-latest
-            maturin_args: "--release --sdist --universal2"
+          - os: macos-13
+            maturin_args: "--release --sdist"
+          - os: macos-14
+            maturin_args: "--release --sdist"
           - os: windows-latest
             maturin_args: "--release --sdist"
 
@@ -73,3 +75,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
+
