@@ -165,7 +165,9 @@ impl BatcherCore {
             }
 
             metrics.total_batches.fetch_add(1, Ordering::Relaxed);
-            metrics.total_items.fetch_add(batch.len() as u64, Ordering::Relaxed);
+            metrics
+                .total_items
+                .fetch_add(batch.len() as u64, Ordering::Relaxed);
 
             Python::with_gil(|py| {
                 let items = batch
