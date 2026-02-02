@@ -37,24 +37,7 @@ jobs:
         working-directory: rust
 
       - name: Rust clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-        working-directory: rust
-
-      - name: Rust tests
-        run: cargo test
-        working-directory: rust
-
-      - name: Build extension
-        run: |
-          maturin build --release
-          python -m pip install dist/*.whl
-
-      - name: Python tests
-        run: pytest
-        working-directory: rust
-
-      - name: Rust clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --all-features -D warnings
         working-directory: rust
 
       - name: Rust tests
