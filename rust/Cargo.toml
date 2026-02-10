@@ -2,7 +2,11 @@
 name = "llm_autobatch_core"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "Apache-2.0"
+description = "Rust core for llm-autobatch (automatic micro-batching)."
+homepage = "https://github.com/fabriziopfannl/llm-autobatch"
+repository = "https://github.com/fabriziopfannl/llm-autobatch"
+authors = ["Fabrizio Pfannl"]
 
 [lib]
 name = "llm_autobatch_core"
