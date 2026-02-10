@@ -8,14 +8,14 @@ version = "0.1.0"
 description = "Automatic micro-batching for HTTP LLM calls and local PyTorch inference, backed by a Rust core."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [
-  { name = "Your Name", email = "you@example.com" }
+  { name = "Fabrizio Pfannl" }
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Rust",
@@ -25,9 +25,10 @@ classifiers = [
 keywords = ["llm", "batching", "rust", "pyo3", "pytorch", "openai"]
 
 [project.urls]
-Homepage = "https://github.com/your-org/llm-autobatch"
-Source = "https://github.com/your-org/llm-autobatch"
-Issues = "https://github.com/your-org/llm-autobatch/issues"
+Homepage = "https://github.com/fabriziopfannl/llm-autobatch"
+Source = "https://github.com/fabriziopfannl/llm-autobatch"
+Issues = "https://github.com/fabriziopfannl/llm-autobatch/issues"
+
 
 [project.optional-dependencies]
 http = ["httpx>=0.24"]
