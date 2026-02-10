@@ -2,9 +2,9 @@
 
 Production-minded micro-batching for LLM calls and local PyTorch inference, backed by a single Rust core.
 
-- **Viral simple:** `@autobatch` turns single calls into efficient batches.
+- **Drop-in batching:** `@autobatch` turns single calls into efficient batches.
 - **Adapter-based:** swap HTTP or Torch executors without changing the core.
-- **Rust-fast:** thread-safe queues, micro-windows, and backpressure.
+- **Rust core:** thread-safe queues, micro-windows, and backpressure.
 
 ## 60-second Quickstart
 
@@ -72,7 +72,7 @@ python benches/bench_throughput.py
 Sample output (illustrative):
 
 ```
-items=10000 max_batch=64 max_wait_ms=5  avg_batch=42.7  p99_ms=11.2
+items=10000 max_batch=64 max_wait_ms=5  avg_batch=42.7  seconds=0.24  items_per_sec=41666.7  max_workers=32 warmup=1000
 ```
 
 ## Why Rust?
@@ -104,7 +104,15 @@ pip install llm-autobatch[torch]
 - `passthrough`: execute immediately
 
 **Can I use async?**
-Not in v1. Async support is planned for v1.1.
+Not yet. Async support is planned for a future release.
+
+**Is ordering preserved?**
+Yes. Outputs must match the input order for each batch.
+
+## License
+
+Apache-2.0
+
 
 **Is ordering preserved?**
 Yes. Outputs must match the input order for each batch.
