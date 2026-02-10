@@ -111,4 +111,4 @@ Yes. Outputs must match the input order for each batch.
 
 ## License
 
-MIT
+Apache-2.0
